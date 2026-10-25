@@ -1,0 +1,94 @@
+:root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --bg-main: #f8fafc;
+    --card-bg: #ffffff;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.brand-header {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.15);
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.data-table th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.badge-urgent {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    animation: blink 1.8s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.btn-whatsapp {
+    background-color: #25d366;
+    color: white;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: background-color 0.2s ease;
+}
+
+.btn-whatsapp:hover {
+    background-color: #1eb855;
+}

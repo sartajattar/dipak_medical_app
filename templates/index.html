@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dipak Medical - Refill & Reminder System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <header class="brand-header text-white px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white text-sky-600 rounded-xl flex items-center justify-center text-2xl font-black shadow-md border-2 border-sky-100">
+                    <i class="fa-solid fa-prescription-bottle-medical"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight">DIPAK MEDICAL</h1>
+                    <p class="text-xs text-sky-100">Medicine Stock Refill & Automated Reminder System</p>
+                </div>
+            </div>
+
+            <button onclick="document.getElementById('patientModal').classList.remove('hidden')" class="bg-white text-sky-700 hover:bg-sky-50 font-bold px-4 py-2 rounded-lg text-sm shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Add New Patient
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-xl text-sm font-semibold {% if category == 'success' %}bg-emerald-100 text-emerald-800 border border-emerald-200{% elif category == 'danger' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-sky-100 text-sky-800 border border-sky-200{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div class="stat-card border-l-4 border-l-sky-500">
+                <p class="text-xs font-bold text-gray-500 uppercase">Total Patients</p>
+                <h3 class="text-3xl font-extrabold text-slate-800 mt-1">{{ total_patients }}</h3>
+            </div>
+
+            <div class="stat-card border-l-4 border-l-rose-500 bg-rose-50/20">
+                <p class="text-xs font-bold text-rose-600 uppercase flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Reminders Due Today
+                </p>
+                <h3 class="text-3xl font-extrabold text-rose-700 mt-1">{{ due_count }}</h3>
+            </div>
+
+            <div class="stat-card border-l-4 border-l-emerald-500">
+                <p class="text-xs font-bold text-gray-500 uppercase">Sent Reminders</p>
+                <h3 class="text-3xl font-extrabold text-slate-800 mt-1">{{ sent_count }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <h2 class="text-md font-bold text-slate-800">
+                    <i class="fa-solid fa-list-check text-sky-600 mr-1"></i> Patient Refill Tracker
+                </h2>
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search patient or medicine..." class="px-4 py-2 border border-slate-300 rounded-lg text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="data-table" id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>Patient Info</th>
+                            <th>Medicine</th>
+                            <th>Dosage Plan</th>
+                            <th>Purchase Date</th>
+                            <th>Reminder Date</th>
+                            <th>Status</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        {% set is_due = (patient.reminder_date <= today_date and patient.status != 'Sent') %}
+                        <tr class="hover:bg-slate-50 transition {% if is_due %}bg-rose-50/40{% endif %}">
+                            <td>
+                                <div class="font-bold text-slate-800">{{ patient.name }}</div>
+                                <div class="text-xs text-slate-500">{{ patient.phone }}</div>
+                            </td>
+                            <td>
+                                <span class="bg-slate-100 text-slate-800 font-semibold px-2 py-1 rounded text-xs border border-slate-200">
+                                    {{ patient.medicine_name }}
+                                </span>
+                            </td>
+                            <td class="text-sm font-semibold text-slate-700">{{ patient.dosage_days }} Days</td>
+                            <td class="text-sm text-slate-600">{{ patient.purchase_date }}</td>
+                            <td>
+                                <div class="text-sm font-bold {% if is_due %}text-rose-600{% else %}text-slate-700{% endif %}">
+                                    {{ patient.reminder_date }}
+                                </div>
+                                <div class="text-[11px] text-slate-400">Ends: {{ patient.expiry_date }}</div>
+                            </td>
+                            <td>
+                                {% if patient.status == 'Sent' %}
+                                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">Sent</span>
+                                {% elif is_due %}
+                                    <span class="badge-urgent">Due Now</span>
+                                {% else %}
+                                    <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">Scheduled</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex items-center justify-center gap-2">
+                                    {% set msg = "नमस्कार " ~ patient.name ~ " जी, दीपक मेडिकल (Dipak Medical) तर्फे आठवण: आपण घेतलेल्या " ~ patient.medicine_name ~ " या गोळ्या पुढील २ दिवसांत (" ~ patient.expiry_date ~ ") संपत आहेत. नियमित डोस चुकू नये म्हणून वेळेवर गोळ्या रिफिल करून घ्या. धन्यवाद! - दीपक मेडिकल." %}
+                                    <a href="https://api.whatsapp.com/send?phone=91{{ patient.phone }}&text={{ msg | urlencode }}" target="_blank" onclick="setTimeout(function(){ window.location.href='/mark_sent/{{ patient.id }}'; }, 1000);" class="btn-whatsapp">
+                                        <i class="fa-brands fa-whatsapp"></i> Send SMS
+                                    </a>
+                                    <a href="{{ url_for('delete_patient', patient_id=patient.id) }}" onclick="return confirm('Delete record?')" class="text-slate-400 hover:text-rose-600 p-2 text-sm">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="patientModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-800">Add Patient Entry</h3>
+                <button onclick="document.getElementById('patientModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+
+            <form action="{{ url_for('add_patient') }}" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Patient Name</label>
+                    <input type="text" name="name" required placeholder="John Doe" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Phone Number</label>
+                    <input type="tel" name="phone" required placeholder="98XXXXXXXX" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Medicine Name</label>
+                    <input type="text" name="medicine_name" required placeholder="Glycomet Trio 1mg" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
+                        <select name="dosage_days" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500">
+                            <option value="15" selected>15 Days (Alert on day 13)</option>
+                            <option value="30">30 Days (Alert on day 28)</option>
+                            <option value="10">10 Days (Alert on day 8)</option>
+                            <option value="7">7 Days (Alert on day 5)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Purchase Date</label>
+                        <input type="date" name="purchase_date" value="{{ today_date }}" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+                        Save & Set Reminder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function filterTable() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toUpperCase();
+            var table = document.getElementById("patientsTable");
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {
+                var tdName = tr[i].getElementsByTagName("td")[0];
+                var tdMed = tr[i].getElementsByTagName("td")[1];
+                if (tdName || tdMed) {
+                    var txt = (tdName.textContent || tdName.innerText) + " " + (tdMed.textContent || tdMed.innerText);
+                    tr[i].style.display = txt.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
