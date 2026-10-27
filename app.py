@@ -79,19 +79,30 @@ def login():
         user = conn.execute("SELECT * FROM medicals WHERE phone = ?", (phone,)).fetchone()
         conn.close()
 
-        if user and user['password'] == password:
-            if user['status'] != 'approved':
-                flash('तुमचे अकाउंट अजून दीपक मेडिकल (Admin) कडून अप्रूव्ह झालेले नाही. कृपया वाट पहा!', 'warning')
-                return render_template('login.html')
-            
-            session['user_id'] = user['id']
-            session['medical_name'] = user['medical_name']
-            session['role'] = user['role']
+        # 1. मोबाईल नंबर नोंदणीकृत नसेल तर:
+        if not user:
+            flash('हा मोबाईल नंबर नोंदणीकृत नाही. कृपया आधी नोंदणी करा!', 'danger')
+            return render_template('login.html')
 
-            # सर्व युजर्स आणि दीपक मेडिकल दोघांनाही थेट डॅशबोर्डवर नेणे
-            return redirect(url_for('medical_dashboard'))
-        else:
-            flash('मोबाईल नंबर किंवा पासवर्ड चुकीचा आहे.', 'danger')
+        # 2. अप्रूव्हल पेंडिंग किंवा रिजेक्ट असेल तर थेट मेसेज:
+        if user['status'] == 'pending':
+            flash('तुमचे अकाउंट अजून दीपक मेडिकल (Admin) कडून अप्रूव्ह झालेले नाही. कृपया वाट पहा!', 'warning')
+            return render_template('login.html')
+        elif user['status'] == 'rejected':
+            flash('तुमचे अकाउंट दीपक मेडिकलकडून नाकारण्यात (Reject) आले आहे.', 'danger')
+            return render_template('login.html')
+
+        # 3. पासवर्ड चुकीचा असेल तर:
+        if user['password'] != password:
+            flash('तुम्ही टाकलेला पासवर्ड चुकीचा आहे.', 'danger')
+            return render_template('login.html')
+
+        # 4. सर्व माहिती बरोबर असल्यास लॉगिन:
+        session['user_id'] = user['id']
+        session['medical_name'] = user['medical_name']
+        session['role'] = user['role']
+
+        return redirect(url_for('medical_dashboard'))
 
     return render_template('login.html')
 
@@ -125,11 +136,11 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- SUPER ADMIN APPROVAL PANEL (दीपक मेडिकलसाठी) ---
+# --- SUPER ADMIN (दीपक मेडिकल अप्रूव्हल पॅनेल) ---
 @app.route('/admin')
 def admin_dashboard():
     if session.get('role') != 'admin':
-        flash('फक्त ॲडमिनसाठी परवानगी आहे.', 'danger')
+        flash('फक्त मुख्य ॲडमिनसाठी परवानगी आहे.', 'danger')
         return redirect(url_for('medical_dashboard'))
 
     conn = get_db()
@@ -153,7 +164,7 @@ def medical_action(med_id, action):
     flash(f"मेडिकल स्टेटस '{new_status}' करण्यात आले.", 'info')
     return redirect(url_for('admin_dashboard'))
 
-# --- MAIN DASHBOARD (PATIENTS, REMINDER & REFILL) ---
+# --- PATIENT TRACKER, REMINDER & REFILL DASHBOARD ---
 @app.route('/dashboard')
 def medical_dashboard():
     if 'user_id' not in session:
