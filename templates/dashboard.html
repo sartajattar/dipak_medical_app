@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOSE-IN - Medical Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <header class="bg-gradient-to-r from-sky-700 to-indigo-800 text-white px-6 py-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white text-sky-700 rounded-xl flex items-center justify-center text-2xl font-black shadow">
+                    <i class="fa-solid fa-pills"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight">DOSE-IN</h1>
+                    <p class="text-xs text-sky-200">Store: <span class="font-bold text-white">{{ medical_name }}</span></p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="document.getElementById('patientModal').classList.remove('hidden')" class="bg-white text-sky-800 hover:bg-sky-50 font-bold px-4 py-2 rounded-lg text-sm shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> New Patient
+                </button>
+                <a href="/logout" class="bg-rose-500/30 hover:bg-rose-600 text-white font-bold px-3 py-2 rounded-lg text-xs">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-xl text-sm font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-sky-500">
+                <p class="text-xs font-bold text-slate-400 uppercase">Total Patients</p>
+                <h3 class="text-3xl font-extrabold text-slate-800 mt-1">{{ total_patients }}</h3>
+            </div>
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500 bg-rose-50/20">
+                <p class="text-xs font-bold text-rose-600 uppercase flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Reminders Due
+                </p>
+                <h3 class="text-3xl font-extrabold text-rose-700 mt-1">{{ due_count }}</h3>
+            </div>
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+                <p class="text-xs font-bold text-slate-400 uppercase">Reminders Sent</p>
+                <h3 class="text-3xl font-extrabold text-slate-800 mt-1">{{ sent_count }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="font-bold text-slate-800"><i class="fa-solid fa-list-check text-sky-600 mr-2"></i>Patient Tracker</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-slate-500 uppercase text-xs border-b">
+                        <tr>
+                            <th class="p-4">Patient Info</th>
+                            <th class="p-4">Medicine</th>
+                            <th class="p-4">Duration</th>
+                            <th class="p-4">Reminder Date</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for patient in patients %}
+                        {% set is_due = (patient.reminder_date <= today_date and patient.status != 'Sent') %}
+                        <tr class="hover:bg-slate-50 transition {% if is_due %}bg-rose-50/30{% endif %}">
+                            <td class="p-4">
+                                <div class="font-bold text-slate-800">{{ patient.name }}</div>
+                                <div class="text-xs text-slate-400">{{ patient.phone }}</div>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-slate-100 text-slate-800 font-semibold px-2 py-1 rounded text-xs border">
+                                    {{ patient.medicine_name }}
+                                </span>
+                            </td>
+                            <td class="p-4 font-semibold text-slate-600">{{ patient.dosage_days }} Days</td>
+                            <td class="p-4">
+                                <div class="font-bold {% if is_due %}text-rose-600{% else %}text-slate-700{% endif %}">
+                                    {{ patient.reminder_date }}
+                                </div>
+                                <div class="text-[11px] text-slate-400">Ends: {{ patient.expiry_date }}</div>
+                            </td>
+                            <td class="p-4">
+                                {% if patient.status == 'Sent' %}
+                                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full">Sent</span>
+                                {% elif is_due %}
+                                    <span class="bg-rose-100 text-rose-700 text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">Due Now</span>
+                                {% else %}
+                                    <span class="bg-slate-100 text-slate-600 text-xs font-medium px-2 py-0.5 rounded-full">Scheduled</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center justify-center gap-2">
+                                    <!-- Repeat Refill Button -->
+                                    <button onclick="openRefillModal('{{ patient.id }}', '{{ patient.name }}', '{{ patient.medicine_name }}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-1.5 rounded-lg text-xs shadow flex items-center gap-1" title="Repeat Dose">
+                                        <i class="fa-solid fa-arrows-rotate"></i> Refill
+                                    </button>
+
+                                    <!-- WhatsApp Reminder Button -->
+                                    {% set msg = "नमस्कार " ~ patient.name ~ " जी, " ~ medical_name ~ " तर्फे आठवण: आपण घेतलेल्या " ~ patient.medicine_name ~ " या गोळ्या पुढील २ दिवसांत (" ~ patient.expiry_date ~ ") संपत आहेत. नियमित डोस चुकू नये म्हणून वेळेवर गोळ्या रिफिल करून घ्या. धन्यवाद! - " ~ medical_name ~ "." %}
+                                    <a href="https://api.whatsapp.com/send?phone=91{{ patient.phone }}&text={{ msg | urlencode }}" target="_blank" onclick="setTimeout(function(){ window.location.href='/mark_sent/{{ patient.id }}'; }, 1000);" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1.5 rounded-lg text-xs shadow flex items-center gap-1">
+                                        <i class="fa-brands fa-whatsapp"></i> Reminder
+                                    </a>
+
+                                    <a href="{{ url_for('delete_patient', patient_id=patient.id) }}" onclick="return confirm('Record delete karaycha ka?')" class="text-slate-300 hover:text-rose-600 p-1">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Patient Modal -->
+    <div id="patientModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800">Add New Patient Entry</h3>
+                <button onclick="document.getElementById('patientModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+            <form action="{{ url_for('add_patient') }}" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Patient Name</label>
+                    <input type="text" name="name" required placeholder="Patient Name" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Mobile No</label>
+                    <input type="tel" name="phone" required placeholder="10 Digit Number" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Medicine Name</label>
+                    <input type="text" name="medicine_name" required placeholder="Medicine Name" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Duration</label>
+                        <select name="dosage_days" class="w-full px-3 py-2 border rounded-lg text-sm outline-none">
+                            <option value="15" selected>15 Days</option>
+                            <option value="30">30 Days</option>
+                            <option value="10">10 Days</option>
+                            <option value="7">7 Days</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Date</label>
+                        <input type="date" name="purchase_date" value="{{ today_date }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg text-sm">Save & Set Reminder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Repeat Refill Modal -->
+    <div id="refillModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h3 class="font-bold text-slate-800">Repeat Dose Refill</h3>
+                    <p class="text-xs text-slate-500" id="refillPatientName"></p>
+                </div>
+                <button onclick="document.getElementById('refillModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+            <form id="refillForm" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Medicine Name (Change if needed)</label>
+                    <input type="text" id="refillMedName" name="medicine_name" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">New Duration</label>
+                        <select name="dosage_days" class="w-full px-3 py-2 border rounded-lg text-sm outline-none">
+                            <option value="15" selected>15 Days</option>
+                            <option value="30">30 Days</option>
+                            <option value="10">10 Days</option>
+                            <option value="7">7 Days</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Refill Date</label>
+                        <input type="date" name="purchase_date" value="{{ today_date }}" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg text-sm">Update Refill & Reset Reminder</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openRefillModal(id, name, med) {
+            document.getElementById('refillPatientName').innerText = 'Patient: ' + name;
+            document.getElementById('refillMedName').value = med;
+            document.getElementById('refillForm').action = '/repeat_refill/' + id;
+            document.getElementById('refillModal').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

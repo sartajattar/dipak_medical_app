@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - DOSE-IN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-sky-600 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-md mb-2">
+                <i class="fa-solid fa-pills"></i>
+            </div>
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight">DOSE-IN</h1>
+            <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">Smart Medical Refill Network</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-3 rounded-lg text-xs font-bold {% if category == 'success' %}bg-emerald-100 text-emerald-800{% elif category == 'danger' %}bg-rose-100 text-rose-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/login" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Mobile Number</label>
+                <input type="text" name="phone" required placeholder="Registered Mobile No." class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+                <input type="password" name="password" required placeholder="Enter Password" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+            </div>
+
+            <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg text-sm shadow transition">
+                Login
+            </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+            <p class="text-xs text-slate-500">Navin Medical aahat? 
+                <a href="/register" class="text-sky-600 font-bold hover:underline">Register Your Medical</a>
+            </p>
+            <p class="text-[11px] text-slate-400 mt-2">Dipak Medical Admin: 9999999999 | Pass: admin123</p>
+        </div>
+    </div>
+</body>
+</html>

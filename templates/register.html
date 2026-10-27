@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Medical - DOSE-IN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-slate-200">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-black text-slate-800">DOSE-IN Medical Registration</h1>
+            <p class="text-xs text-slate-500 mt-1">Dipak Medical Admin approve kelyanantar tumcha account suru hoil.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-3 rounded-lg text-xs font-bold bg-rose-100 text-rose-800">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/register" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Medical Store Name</label>
+                <input type="text" name="medical_name" required placeholder="e.g. Shree Ganesh Medical" class="w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Owner / Chemist Name</label>
+                <input type="text" name="owner_name" required placeholder="Full Name" class="w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Mobile Number (For Login)</label>
+                    <input type="tel" name="phone" required placeholder="10 Digit Number" class="w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Location / City</label>
+                    <input type="text" name="location" required placeholder="e.g. Solapur, Pune" class="w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+                <input type="password" name="password" required placeholder="Create Password" class="w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm shadow transition">
+                Register & Request Approval
+            </button>
+        </form>
+
+        <div class="mt-4 text-center">
+            <a href="/login" class="text-xs text-sky-600 font-bold hover:underline">Aadhich account aahe? Login kara</a>
+        </div>
+    </div>
+</body>
+</html>
