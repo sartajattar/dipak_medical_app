@@ -54,7 +54,7 @@ def init_db():
     if not cursor.fetchone():
         cursor.execute('''
             INSERT INTO medicals (medical_name, owner_name, phone, location, password, role, status)
-            VALUES ('Dipak Medical (Admin)', 'Dipak Owner', '7387260111', 'Main Branch', 'admin123', 'admin', 'approved')
+            VALUES ('Dipak Medical', 'Dipak', '7387260111', 'Main Branch', 'admin123', 'admin', 'approved')
         ''')
 
     conn.commit()
@@ -66,8 +66,6 @@ init_db()
 @app.route('/')
 def home():
     if 'user_id' in session:
-        if session.get('role') == 'admin':
-            return redirect(url_for('admin_dashboard'))
         return redirect(url_for('medical_dashboard'))
     return redirect(url_for('login'))
 
@@ -83,18 +81,17 @@ def login():
 
         if user and user['password'] == password:
             if user['status'] != 'approved':
-                flash('Tumche account ajun Dipak Medical (Admin) kadun approve zale nahi. Krupaya thambava!', 'warning')
+                flash('तुमचे अकाउंट अजून दीपक मेडिकल (Admin) कडून अप्रूव्ह झालेले नाही. कृपया वाट पहा!', 'warning')
                 return render_template('login.html')
             
             session['user_id'] = user['id']
             session['medical_name'] = user['medical_name']
             session['role'] = user['role']
 
-            if user['role'] == 'admin':
-                return redirect(url_for('admin_dashboard'))
+            # सर्व युजर्स आणि दीपक मेडिकल दोघांनाही थेट डॅशबोर्डवर नेणे
             return redirect(url_for('medical_dashboard'))
         else:
-            flash('Mobile number kiva password chukicha aahe.', 'danger')
+            flash('मोबाईल नंबर किंवा पासवर्ड चुकीचा आहे.', 'danger')
 
     return render_template('login.html')
 
@@ -114,10 +111,10 @@ def register():
                 VALUES (?, ?, ?, ?, ?, 'medical', 'pending')
             ''', (medical_name, owner_name, phone, location, password))
             conn.commit()
-            flash('Registration yashaswi zale! Dipak Medical approval dilyanantar tumhi login karu shakta.', 'success')
+            flash('नोंदणी यशस्वी झाली! दीपक मेडिकलने अप्रूव्ह केल्यानंतर तुम्हाला लॉगिन करता येईल.', 'success')
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
-            flash('Ha mobile number aadhich register aahe.', 'danger')
+            flash('हा मोबाईल नंबर आधीच नोंदणीकृत आहे.', 'danger')
         finally:
             conn.close()
 
@@ -128,11 +125,12 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- SUPER ADMIN (DIPAK MEDICAL) DASHBOARD ---
+# --- SUPER ADMIN APPROVAL PANEL (दीपक मेडिकलसाठी) ---
 @app.route('/admin')
 def admin_dashboard():
     if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+        flash('फक्त ॲडमिनसाठी परवानगी आहे.', 'danger')
+        return redirect(url_for('medical_dashboard'))
 
     conn = get_db()
     medicals = conn.execute("SELECT * FROM medicals WHERE role != 'admin' ORDER BY id DESC").fetchall()
@@ -152,10 +150,10 @@ def medical_action(med_id, action):
     conn.execute("UPDATE medicals SET status = ? WHERE id = ?", (new_status, med_id))
     conn.commit()
     conn.close()
-    flash(f"Medical status '{new_status}' kela gela.", 'info')
+    flash(f"मेडिकल स्टेटस '{new_status}' करण्यात आले.", 'info')
     return redirect(url_for('admin_dashboard'))
 
-# --- MEDICAL DASHBOARD (PATIENTS & REFILL) ---
+# --- MAIN DASHBOARD (PATIENTS, REMINDER & REFILL) ---
 @app.route('/dashboard')
 def medical_dashboard():
     if 'user_id' not in session:
@@ -177,7 +175,8 @@ def medical_dashboard():
                            total_patients=total_patients,
                            due_count=due_count,
                            sent_count=sent_count,
-                           medical_name=session.get('medical_name'))
+                           medical_name=session.get('medical_name'),
+                           is_admin=(session.get('role') == 'admin'))
 
 @app.route('/add_patient', methods=['POST'])
 def add_patient():
@@ -204,7 +203,7 @@ def add_patient():
     conn.commit()
     conn.close()
 
-    flash('Navin patient nohavla gela!', 'success')
+    flash('नवीन पेशंट यशस्वीरीत्या जोडला गेला!', 'success')
     return redirect(url_for('medical_dashboard'))
 
 @app.route('/repeat_refill/<int:patient_id>', methods=['POST'])
@@ -238,7 +237,7 @@ def repeat_refill(patient_id):
     conn.commit()
     conn.close()
 
-    flash('Patient cha dose repeat refill zala!', 'success')
+    flash('डोस पुन्हा रिफिल केला गेला आणि नवीन रिमाइंडर सेट झाले!', 'success')
     return redirect(url_for('medical_dashboard'))
 
 @app.route('/mark_sent/<int:patient_id>')
@@ -261,7 +260,7 @@ def delete_patient(patient_id):
     conn.execute("DELETE FROM patients WHERE id = ? AND medical_id = ?", (patient_id, session['user_id']))
     conn.commit()
     conn.close()
-    flash('Patient record delete kela.', 'info')
+    flash('रेकॉर्ड काढून टाकले.', 'info')
     return redirect(url_for('medical_dashboard'))
 
 if __name__ == '__main__':
